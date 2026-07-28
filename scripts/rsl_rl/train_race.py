@@ -106,7 +106,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         log_dir += f"_{agent_cfg.run_name}"
     log_dir = os.path.join(log_root_path, log_dir)
 
-    # TODO ----- START ----- Define rewards scales
+    # Reward scales (tuned values; see WRITEUP.md for the "Version 1 -> Version 2" iteration history)
     # Progress: Δ-distance reward (arxiv 2406.12505 λ₁=0.5, scaled to meters/step)
     # At 2 m/s flight speed → ~0.04 m/step; 1.0 gives balanced signal
     progress_goal_reward_scale = 1.0
@@ -133,7 +133,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         'cmd_reward_scale':           cmd_reward_scale,
         'death_cost':                 death_cost,
     }
-    # TODO ----- END -----
 
     env_cfg.is_train = True
     env_cfg.rewards = rewards

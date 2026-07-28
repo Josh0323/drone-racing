@@ -1,0 +1,15 @@
+# Exact package versions captured from a real training run (2026-04-23, 1000
+# iterations, GCP g2-standard-8 + NVIDIA L4) via wandb's automatic
+# requirements.txt snapshot. Install torch and isaacsim per the handout's
+# index URLs (they are not on PyPI directly); this file documents the
+# specific versions proven to work together, not a pip-installable manifest.
+
+torch==2.7.0+cu128
+torchvision==0.22.0+cu128
+isaacsim==4.5.0.0
+numpy==1.26.4
+wandb==0.25.1
+
+# Conda env used on the training VM was named `env2`. The repo's own
+# .envrc expects `isaac_quad_sim2real` -- these never matched; pick one
+# name and use it consistently if rebuilding the environment.
