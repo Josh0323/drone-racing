@@ -133,7 +133,9 @@ class QuadcopterEnvCfg(DirectRLEnvCfg):
     # env
     episode_length_s = 30.0             # episode_length = episode_length_s / dt / decimation
     action_space = 4
-    observation_space = 20  # v_b(3) + omega_b(3) + delta_p0_b(3) + delta_p1_b(3) + q_rel(4) + prev_action(4)
+    # v_b(3) + rotation_matrix(9) + gate_corners_curr_b(12) + gate_corners_next_b(12), see
+    # DefaultQuadcopterStrategy.get_observations() in quadcopter_strategies.py
+    observation_space = 36
     state_space = 0
     debug_vis = True
 

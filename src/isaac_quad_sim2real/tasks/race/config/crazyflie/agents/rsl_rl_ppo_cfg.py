@@ -18,7 +18,10 @@ class QuadcopterPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     wandb_project = "ese651_quadcopter"  # Wandb project name for logging
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
-        actor_hidden_dims=[128, 128],
+        # Must match the real-hardware controller's Actor(...) architecture in
+        # ese651_sim2real/src/controller/controller/controller_simple_policy.py,
+        # or a checkpoint trained here won't load into the deployed policy.
+        actor_hidden_dims=[512, 512, 256, 128],
         critic_hidden_dims=[512, 256, 128, 128],
         activation="elu",
         min_std=0.0,
