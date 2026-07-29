@@ -90,6 +90,13 @@ class DefaultQuadcopterStrategy:
         self._episode_speed_at_pass    = torch.zeros(self.num_envs, device=self.device)
         self._episode_backwards_count  = torch.zeros(self.num_envs, device=self.device)
 
+        # Per-gate pass counts this episode, for diagnosing whether specific gates
+        # (e.g. the powerloop gates 2/3) are harder than the rest of the course.
+        self.num_waypoints = self.env._waypoints.shape[0]
+        self._episode_gate_hit_counts = torch.zeros(
+            self.num_envs, self.num_waypoints, device=self.device
+        )
+
         # Episode reward sums for logging
         if self.cfg.is_train and hasattr(env, 'rew'):
             reward_keys = ["progress_goal", "gate_pass", "crash", "cmd"]
@@ -195,6 +202,12 @@ class DefaultQuadcopterStrategy:
 
         # Advance waypoint index and counters for envs that passed a gate
         if len(ids_gate_passed) > 0:
+            # Capture which gate was actually just passed (before advancing idx_wp)
+            # to break down pass counts per gate -- e.g. to check whether the
+            # powerloop gates (2/3) are harder than the rest of the course.
+            passed_gate_idx = self.env._idx_wp[ids_gate_passed].clone()
+            self._episode_gate_hit_counts[ids_gate_passed, passed_gate_idx] += 1
+
             self.env._idx_wp[ids_gate_passed] = (
                 self.env._idx_wp[ids_gate_passed] + 1
             ) % num_waypoints
@@ -411,6 +424,20 @@ class DefaultQuadcopterStrategy:
             extras["Episode_Metric/backwards_traversal_mean"] = (
                 self._episode_backwards_count[env_ids].mean().item()
             )
+
+            # Per-gate pass counts, to check whether specific gates (e.g. the
+            # powerloop's gates 2/3) are harder than the rest of the course.
+            gate_hits = self._episode_gate_hit_counts[env_ids]  # (n_reset, num_waypoints)
+            for i in range(self.num_waypoints):
+                extras[f"Episode_Gate/gate{i}_pass_count_mean"] = gate_hits[:, i].mean().item()
+            if self.num_waypoints > 3:
+                powerloop_mean = gate_hits[:, [2, 3]].mean().item()
+                other_idx = [i for i in range(self.num_waypoints) if i not in (2, 3)]
+                other_mean = gate_hits[:, other_idx].mean().item()
+                extras["Episode_Gate/powerloop_vs_other_ratio"] = (
+                    powerloop_mean / other_mean if other_mean > 0 else float("nan")
+                )
+            self._episode_gate_hit_counts[env_ids] = 0.0
 
             self.env.extras["log"] = extras
 
