@@ -183,6 +183,14 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # run training
     runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
 
+    # Explicitly finish the W&B run now, before any simulator teardown. Isaac Sim's
+    # simulation_app.close() (and possibly env.close()) can hard-exit the process rather than
+    # returning normally, which skips Python's atexit handlers -- including wandb's own
+    # finish hook -- and leaves the run stuck showing "Crashed" on wandb.ai even though
+    # training completed successfully.
+    if runner.writer is not None and hasattr(runner.writer, "stop"):
+        runner.writer.stop()
+
     # close the simulator
     env.close()
 
